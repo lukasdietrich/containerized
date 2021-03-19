@@ -1,0 +1,3 @@
+[submodule "submodules/focalboard"]
+	path = submodules/focalboard
+	url = https://github.com/mattermost/focalboard.git
