@@ -1,0 +1,16 @@
+{
+	"serverRoot": "http://localhost:8000",
+	"port": 8000,
+	"useSSL": false,
+	"dbtype": "sqlite3",
+	"dbconfig": "/data/focalboard.sqlite",
+	"filespath": "/data/files",
+	"webpath": "/app/pack",
+	"telemetry": false,
+	"secret": "secret",
+	"session_expire_time": 2592000,
+	"session_refresh_time": 18000,
+	"localOnly": false,
+	"enableLocalMode": false,
+	"localModeSocketLocation": "/var/tmp/focalboard_local.socket"
+}
