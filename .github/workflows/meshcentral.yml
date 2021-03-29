@@ -19,12 +19,12 @@ jobs:
         id: docker_meta
         uses: crazy-max/ghaction-docker-meta@v1
         with:
-          images: docker.pkg.github.com/${{ github.repository }}/meshcentral
+          images: ghcr.io/${{ github.repository }}-meshcentral
  
       - name: Login to GitHub Packages Docker Registry
         uses: docker/login-action@v1 
         with:
-          registry: docker.pkg.github.com
+          registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
