@@ -1,10 +1,10 @@
 FROM node:alpine
 
-	WORKDIR /data
-	RUN npm install -g meshcentral
+	WORKDIR /app
+	RUN npm install meshcentral
 
 	EXPOSE 80/tcp 443/tcp
 
-	VOLUME [ "/data/meshcentral-data", "/data/meshcentral-files" ]
+	VOLUME [ "/app/meshcentral-data", "/app/meshcentral-files" ]
 
-	CMD [ "meshcentral" ]
+	CMD [ "node", "node_modules/meshcentral" ]
