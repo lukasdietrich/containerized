@@ -24,8 +24,6 @@ jobs:
           images: ghcr.io/${{ github.repository }}-meshcentral
           flavor: |
             latest=true
-          tags: |
-            type=schedule,pattern=weekly
  
       - name: Login to GitHub Packages Docker Registry
         uses: docker/login-action@v1 
