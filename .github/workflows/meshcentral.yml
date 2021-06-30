@@ -1,10 +1,12 @@
 name: MeshCentral2
 
 on:
-  schedule:
-    - cron: '0 0 * * SAT'
   workflow_dispatch:
-
+  push:
+    branches:
+      - 'master'
+    paths:
+      - 'meshcentral/**'
 
 jobs:
   docker:

@@ -1,7 +1,8 @@
 FROM node:alpine
 
 	WORKDIR /app
-	RUN npm install meshcentral
+	COPY VERSION .
+	RUN npm install meshcentral@$(cat VERSION) --loglevel verbose
 
 	EXPOSE 80/tcp 443/tcp
 
