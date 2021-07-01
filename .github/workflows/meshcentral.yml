@@ -30,8 +30,3 @@ jobs:
           context: ./meshcentral
           push: true
           tags: ghcr.io/lukasdietrich/dockerized-meshcentral:latest
-          labels:
-            | org.opencontainers.image.title=MeshCentral
-            | org.opencontainers.image.url=https://github.com/lukasdietrich/dockerized
-            | org.opencontainers.image.source=https://github.com/lukasdietrich/dockerized
-            | org.opencontainers.image.licenses=Unlicense
