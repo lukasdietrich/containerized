@@ -1,4 +1,4 @@
-name: MeshCentral2
+name: MeshCentral
 
 on:
   workflow_dispatch:
@@ -10,20 +10,12 @@ on:
 
 jobs:
   docker:
-    name: Publish MeshCentral2
+    name: Publish MeshCentral
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out Dockerfile
         uses: actions/checkout@v2
-
-      - name: Docker meta
-        id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v2
-        with:
-          images: ghcr.io/${{ github.repository }}-meshcentral
-          flavor: |
-            latest=true
  
       - name: Login to GitHub Packages Docker Registry
         uses: docker/login-action@v1 
@@ -37,5 +29,9 @@ jobs:
         with:
           context: ./meshcentral
           push: true
-          tags: ${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ghcr.io/lukasdietrich/dockerized-meshcentral:latest
+          labels:
+            | org.opencontainers.image.title=MeshCentral
+            | org.opencontainers.image.url=https://github.com/lukasdietrich/dockerized
+            | org.opencontainers.image.source=https://github.com/lukasdietrich/dockerized
+            | org.opencontainers.image.licenses=Unlicense
