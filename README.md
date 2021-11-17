@@ -5,3 +5,4 @@ A collection of docker images for projects which either lacked a (pubished) imag
 |Application                         |Repository                              |
 |------------------------------------|----------------------------------------|
 |[MeshCentral](meshcentral/README.md)|<https://github.com/Ylianst/MeshCentral>|
+|Fava                                |<https://github.com/beancount/fava>     |
