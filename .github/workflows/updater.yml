@@ -1,0 +1,32 @@
+name: Dockerized Updater
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - 'updater/**'
+
+jobs:
+  docker:
+    name: Publish Dockerized Updater
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Dockerfile
+        uses: actions/checkout@v2
+ 
+      - name: Login to GitHub Packages Docker Registry
+        uses: docker/login-action@v1 
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
+
+      - name: Build and Push image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./updater
+          push: true
+          tags: ghcr.io/lukasdietrich/dockerized-updater:latest
