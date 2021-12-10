@@ -10,11 +10,14 @@ FROM python:3-alpine
 	RUN adduser -D -H -u 1234 fava
 	
 	EXPOSE 5000/tcp
-	VOLUME /data
 	USER fava
+
+	VOLUME /data
+	VOLUME /plugins
 
 	ENV LC_ALL "C.UTF-8"
 	ENV LANG "C.UTF-8"
+	ENV PYTHONPATH "${PYTHONPATH}:/plugins"
 	ENV FAVA_HOST "0.0.0.0"
 
 	CMD [ "fava", "/data/ledger.beancount" ]
