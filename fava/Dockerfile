@@ -4,7 +4,7 @@ FROM python:3-alpine
 	COPY VERSION .
 
 	RUN apk --no-cache add --virtual build-deps libxml2-dev libxslt-dev gcc musl-dev g++ \
-		&& CFLAGS=-s pip3 install fava==$(cat VERSION) \
+		&& pip3 install fava==$(cat VERSION) \
 		&& apk del build-deps
 
 	RUN adduser -D -H -u 1234 fava
