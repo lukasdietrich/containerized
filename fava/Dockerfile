@@ -3,7 +3,7 @@ FROM python:3-alpine
 	WORKDIR /app
 	COPY VERSION .
 
-	RUN apk --no-cache add --virtual build-deps libxml2-dev libxslt-dev gcc musl-dev g++ bison \
+	RUN apk --no-cache add --virtual build-deps libxml2-dev libxslt-dev gcc musl-dev g++ bison flex \
 		&& pip3 install fava==$(cat VERSION) \
 		&& apk del build-deps
 
