@@ -1,0 +1,12 @@
+{{- with .Values.persistence }}
+{{- if and .enabled (empty .existingClaimName) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "fava.fullname" $ }}
+  labels:
+    {{- include "fava.labels" $ | nindent 4 }}
+spec: {{ .claim | toYaml | nindent 2 }}
+{{- end }}
+{{- end }}

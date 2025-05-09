@@ -50,32 +50,33 @@ jobs:
           fetch-depth: 1
 
       ##################################################################################################################
-      ## Define application vars
+      ## Lookup application upstream version
       ##
-      - name: Define urls and version for ${{ matrix.application }}
-        id: define
+      - name: Lookup upstream version for ${{ matrix.application }}
+        id: upstream
         run: |
           VERSION="$(jq -rj .version upstream.json)"
           TAG="$(echo ${VERSION} | sed -r 's/^v?(.*)$/v\1/')"
 
-          CONTAINER_URL="${REGISTRY_BASE_URL}/${{ matrix.application }}:${TAG}"
-          HELM_URL="${REGISTRY_BASE_URL}/${{ matrix.application }}-helm:${TAG}"
-
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
-          echo "container_url=${CONTAINER_URL}" >> "${GITHUB_OUTPUT}"
-          echo "helm_url=${HELM_URL}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
 
       ##################################################################################################################
       ## Container Image
       ##
-      - name: Check if a container image for ${{ steps.define.outputs.version }} exists
+      - name: Check if a container image for ${{ steps.upstream.outputs.version }} exists
         id: check-container
         run: |
           LOCAL="$(test -f Containerfile ; echo $?)"
-          REGISTRY="$(skopeo inspect --raw "docker://${{ steps.define.outputs.container_url }}" &>/dev/null ; echo $?)"
-
           echo "local=${LOCAL}" >> "${GITHUB_OUTPUT}"
-          echo "registry=${REGISTRY}" >> "${GITHUB_OUTPUT}"
+
+          if [ "${LOCAL}" -eq "0" ]; then
+            URL="${REGISTRY_BASE_URL}/${{ matrix.application }}:${{ steps.upstream.outputs.tag }}"
+            REGISTRY="$(skopeo inspect --raw "docker://${URL}" &>/dev/null ; echo $?)"
+
+            echo "url=${URL}" >> "${GITHUB_OUTPUT}"
+            echo "registry=${REGISTRY}" >> "${GITHUB_OUTPUT}"
+          fi
 
       - if: ${{ steps.check-container.outputs.local == '0' && steps.check-container.outputs.registry != '0' }}
         name: Build container image
@@ -84,10 +85,9 @@ jobs:
         with:
           oci: true
           context: ./${{ matrix.application }}
-          containerfiles: |
-            ./${{ matrix.application }}/Containerfile
-          tags: ${{ steps.define.outputs.container_url }}
-          build-args: VERSION=${{ steps.define.outputs.version }}
+          containerfiles: ./${{ matrix.application }}/Containerfile
+          tags: ${{ steps.check-container.outputs.url }}
+          build-args: VERSION=${{ steps.upstream.outputs.version }}
 
       - if: ${{ steps.check-container.outputs.local == '0' && steps.check-container.outputs.registry != '0' }}
         name: Publish container image
@@ -101,14 +101,21 @@ jobs:
       ##################################################################################################################
       ## Helm Chart
       ##
-      - name: Check if a helm chart for ${{ steps.define.outputs.version }} exists
+      - name: Check if a helm chart for ${{ steps.upstream.outputs.version }} exists
         id: check-helm
         run: |
-          LOCAL="$(test -d ${{ matrix.application }}-helm ; echo $?)"
-          REGISTRY="$(skopeo inspect --raw "docker://${{ steps.define.outputs.helm_url }}" &>/dev/null ; echo $?)"
-
+          LOCAL="$(test -d chart ; echo $?)"
           echo "local=${LOCAL}" >> "${GITHUB_OUTPUT}"
-          echo "registry=${REGISTRY}" >> "${GITHUB_OUTPUT}"
+
+          if [ "${LOCAL}" -eq "0" ]; then
+            NAME="$(yq .name chart/Chart.yaml)"
+            URL="${REGISTRY_BASE_URL}/chart/${NAME}:${{ steps.upstream.outputs.tag }}"
+            REGISTRY="$(skopeo inspect --raw "docker://${URL}" &>/dev/null ; echo $?)"
+
+            echo "name=${NAME}" >> "${GITHUB_OUTPUT}"
+            echo "url=${URL}" >> "${GITHUB_OUTPUT}"
+            echo "registry=${REGISTRY}" >> "${GITHUB_OUTPUT}"
+          fi
 
       - if: ${{ steps.check-helm.outputs.local == '0' && steps.check-helm.outputs.registry != '0' }}
         name: Login to ghcr.io
@@ -121,7 +128,7 @@ jobs:
       - if: ${{ steps.check-helm.outputs.local == '0' && steps.check-helm.outputs.registry != '0' }}
         name: Publish helm chart
         run: |
-          VERSION=${{ steps.define.outputs.version }}
+          VERSION=${{ steps.upstream.outputs.tag }}
 
-          helm package {{ matrix.application }}-helm --version ${VERSION} --app-version ${VERSION}
-          helm push {{ matrix.application }}-helm-${VERSION}.tgz oci://${REGISTRY_BASE_URL}}
+          helm package chart --version ${VERSION} --app-version ${VERSION}
+          helm push ${{ steps.check-helm.outputs.name }}-${VERSION}.tgz oci://${REGISTRY_BASE_URL}}
