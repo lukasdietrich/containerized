@@ -131,4 +131,4 @@ jobs:
           VERSION=${{ steps.upstream.outputs.tag }}
 
           helm package chart --version ${VERSION} --app-version ${VERSION}
-          helm push ${{ steps.check-helm.outputs.name }}-${VERSION}.tgz oci://${REGISTRY_BASE_URL}}
+          helm push ${{ steps.check-helm.outputs.name }}-${VERSION}.tgz oci://${REGISTRY_BASE_URL}
