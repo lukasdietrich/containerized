@@ -87,7 +87,7 @@ jobs:
           containerfiles: |
             ./${{ matrix.application }}/Containerfile
           tags: ${{ steps.define.outputs.container_url }}
-          extra-args: VERSION=${{ steps.define.outputs.version }}
+          build-args: VERSION=${{ steps.define.outputs.version }}
 
       - if: ${{ steps.check-container.outputs.local == '0' && steps.check-container.outputs.registry != '0' }}
         name: Publish container image
