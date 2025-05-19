@@ -26,6 +26,7 @@ jobs:
         uses: renovatebot/github-action@v42.0.2
         env:
           RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_ONBOARDING: "false"
           RENOVATE_USERNAME: ${{ secrets.RENOVATE_USERNAME }}
           RENOVATE_GIT_AUTHOR: ${{ secrets.RENOVATE_GIT_AUTHOR }}
         with:
