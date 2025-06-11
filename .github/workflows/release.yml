@@ -152,7 +152,7 @@ jobs:
         run: |
           VERSION="$(echo "${{ steps.check-chart-pre.outputs.version }}" | sed -r 's/^v?([^+]*)(\+.*)?$/\1/')"
           VERSION=(${VERSION//./ })
-          ((VERSION[2]++))
+          ((VERSION[2]++)) || true
 
           VERSION="v${VERSION[0]}.${VERSION[1]}.${VERSION[2]}"
 
