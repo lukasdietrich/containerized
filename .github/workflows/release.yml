@@ -7,6 +7,7 @@ on:
       - 'master'
 
 permissions:
+  contents: write
   packages: write
 
 env:
@@ -49,11 +50,15 @@ jobs:
         with:
           fetch-depth: 1
 
-      ##################################################################################################################
-      ## Lookup application upstream version
-      ##
       - name: Lookup upstream version for ${{ matrix.application }}
         id: upstream
+
+        # Outputs:
+        # -------
+        # steps.upstream.outputs.version | The raw version coming from upstream.
+        # steps.upstream.outputs.tag     | The upstream version with a leading `v`.
+        #                                : eg. `v1.0.0` -> `v1.0.0`
+        #                                :      `2.1.3` -> `v2.1.3`
         run: |
           VERSION="$(jq -rj .version upstream.json)"
           TAG="$(echo ${VERSION} | sed -r 's/^v?(.*)$/v\1/')"
@@ -61,11 +66,17 @@ jobs:
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
           echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
 
-      ##################################################################################################################
-      ## Container Image
-      ##
       - name: Check if a container image for ${{ steps.upstream.outputs.version }} exists
         id: check-container
+
+        # Outputs:
+        # -------
+        # steps.check-container.outputs.local    | Flag if a `Containerfile` exists.
+        #                                        : (0 == true)
+        # steps.check-container.outputs.registry | Flag if a container image is already present in the registry.
+        #                                        : (0 == true)
+        # steps.check-container.outputs.url      | URL of the tagged container image regardless if it exists.
+        #                                        : eg. ghcr.io/lukasdietrich/containerized/fava:v1.30.3
         run: |
           LOCAL="$(test -f Containerfile ; echo $?)"
           echo "local=${LOCAL}" >> "${GITHUB_OUTPUT}"
@@ -98,26 +109,94 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      ##################################################################################################################
-      ## Helm Chart
-      ##
-      - name: Check if a helm chart for ${{ steps.upstream.outputs.version }} exists
-        id: check-helm
+      - name: Check if a helm chart exists and lookup its values
+        id: check-chart-pre
+
+        # Outputs:
+        # -------
+        # steps.check-chart-pre.outputs.local                | Flag if a `chart/Chart.yaml` exists.
+        #                                                    : (0 == true)
+        # steps.check-chart-pre.outputs.version              | The chart version.
+        #                                                    : eg. v1.0.0+image.v2.3.4
+        # steps.check-chart-pre.outputs.app_version_actual   | The actual (current) container image version.
+        #                                                    : eg. v2.3.4
+        # steps.check-chart-pre.outputs.app_version_expected | The expected (latest) container image version.
+        #                                                    : eg. v2.3.5
         run: |
-          LOCAL="$(test -d chart ; echo $?)"
+          LOCAL="$(test -f chart/Chart.yaml ; echo $?)"
           echo "local=${LOCAL}" >> "${GITHUB_OUTPUT}"
 
           if [ "${LOCAL}" -eq "0" ]; then
+            VERSION="$(yq .version chart/Chart.yaml)"
+            APP_VERSION_ACTUAL="$(yq .appVersion chart/Chart.yaml)"
+
+            if [ "${{ steps.check-container.outputs.local }}" -eq "0" ]; then
+              APP_VERSION_EXPECTED="${{ steps.upstream.outputs.tag }}"
+            else
+              APP_VERSION_EXPECTED="${{ steps.upstream.outputs.version }}"
+            fi
+            
+            echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+            echo "app_version_actual=${APP_VERSION_ACTUAL}" >> "${GITHUB_OUTPUT}"
+            echo "app_version_expected=${APP_VERSION_EXPECTED}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - if: ${{ steps.check-chart-pre.outputs.app_version_actual != steps.check-chart-pre.outputs.app_version_expected }}
+        name: Bump helm chart version
+        id: bump-chart
+
+        # Outputs:
+        # -------
+        # steps.bump-chart.outputs.version | The new chart version.
+        run: |
+          VERSION="$(echo "${{ steps.check-chart-pre.outputs.version }}" | sed -r 's/^v?([^+]*)\+.*$/\1/')"
+          VERSION=("${VERSION//./ }")
+          ((VERSION[2]++))
+
+          VERSION="v${VERSION[0]}.${VERSION[1]}.${VERSION[2]}+image.${{ steps.upstream.outputs.tag }}"
+
+          yq -i e ".version |= \"${VERSION}\"" chart/Chart.yaml
+          yq -i e ".appVersion |= \"${{ steps.check-chart-pre.outputs.app_version_expected }}\"" chart/Chart.yaml
+
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - if: ${{ steps.check-chart-pre.outputs.app_version_actual != steps.check-chart-pre.outputs.app_version_expected }}
+        name: Commit helm chart version
+        id: commit-chart
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore(helm): Bump chart version of ${{ matrix.application }} to ${{ steps.bump-chart.outputs.version }} [skip ci]'
+          file_pattern: 'chart/Chart.yaml'
+          commit_user_name: ${{ vars.RENOVATE_USERNAME }}
+          commit_user_email: ${{ vars.RENOVATE_EMAIL }}
+          commit_author: ${{ vars.RENOVATE_GIT_AUTHOR }}
+
+      - name: Check if a helm chart for ${{ steps.upstream.outputs.version }} exists
+        id: check-chart
+
+        # Outputs:
+        # -------
+        # steps.check-chart.outputs.name     | Name of the chart.
+        # steps.check-chart.outputs.version  | Version of the chart.
+        # steps.check-chart.outputs.registry | Flag if the helm chart is already present in the registry.
+        #                                    : (0 == true)
+        # steps.check-chart.outputs.url      | URL of the tagged helm chart regardless if it exists.
+        #                                    : eg. ghcr.io/lukasdietrich/containerized/chart/fava:v1.31.0+v1.30.3
+        run: |
+          if [ "${{ steps.check-chart-pre.outputs.local }}" -eq "0" ]; then
             NAME="$(yq .name chart/Chart.yaml)"
-            URL="${REGISTRY_BASE_URL}/chart/${NAME}:${{ steps.upstream.outputs.tag }}"
+            VERSION="$(yq .version chart/Chart.yaml)"
+
+            URL="${REGISTRY_BASE_URL}/chart/${NAME}:${VERSION}"
             REGISTRY="$(skopeo inspect --raw "docker://${URL}" &>/dev/null ; echo $?)"
 
             echo "name=${NAME}" >> "${GITHUB_OUTPUT}"
+            echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
             echo "url=${URL}" >> "${GITHUB_OUTPUT}"
             echo "registry=${REGISTRY}" >> "${GITHUB_OUTPUT}"
           fi
 
-      - if: ${{ steps.check-helm.outputs.local == '0' && steps.check-helm.outputs.registry != '0' }}
+      - if: ${{ steps.check-chart-pre.outputs.local == '0' && steps.check-chart.outputs.registry != '0' }}
         name: Login to ghcr.io
         uses: docker/login-action@v3
         with:
@@ -125,10 +204,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - if: ${{ steps.check-helm.outputs.local == '0' && steps.check-helm.outputs.registry != '0' }}
+      - if: ${{ steps.check-chart-pre.outputs.local == '0' && steps.check-chart.outputs.registry != '0' }}
         name: Publish helm chart
         run: |
-          VERSION=${{ steps.upstream.outputs.tag }}
-
-          helm package chart --version ${VERSION} --app-version ${VERSION}
-          helm push ${{ steps.check-helm.outputs.name }}-${VERSION}.tgz oci://${REGISTRY_BASE_URL}/chart
+          helm package chart
+          helm push "${{ steps.check-chart.outputs.name }}-${{ steps.check-chart.outputs.version }}.tgz" "oci://${REGISTRY_BASE_URL}/chart"
