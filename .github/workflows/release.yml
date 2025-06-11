@@ -163,7 +163,7 @@ jobs:
       - if: ${{ steps.check-chart-pre.outputs.app_version_actual != steps.check-chart-pre.outputs.app_version_expected }}
         name: Commit helm chart version
         id: commit-chart
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: 'chore(helm): Bump chart version of ${{ matrix.application }} to ${{ steps.bump-chart.outputs.version }} [skip ci]'
           file_pattern: 'chart/Chart.yaml'
