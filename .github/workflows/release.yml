@@ -167,7 +167,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: 'chore(helm): Bump chart version of ${{ matrix.application }} to ${{ steps.bump-chart.outputs.version }} [skip ci]'
-          file_pattern: 'chart/Chart.yaml'
+          file_pattern: '**/Chart.yaml'
           commit_user_name: ${{ vars.RENOVATE_USERNAME }}
           commit_user_email: ${{ vars.RENOVATE_EMAIL }}
           commit_author: ${{ vars.RENOVATE_GIT_AUTHOR }}
