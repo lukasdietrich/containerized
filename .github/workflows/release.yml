@@ -44,6 +44,7 @@ jobs:
     defaults:
       run:
         working-directory: ${{ matrix.application }}
+        shell: bash
 
     steps:
       - uses: actions/checkout@v4
