@@ -4,5 +4,5 @@ description: A Helm chart for vaultwarden
 source:
   - https://github.com/dani-garcia/vaultwarden
 type: application
-version: v0.1.1
-appVersion: 1.34.1-alpine
+version: v0.1.2
+appVersion: 1.34.2-alpine
