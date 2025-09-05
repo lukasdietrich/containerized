@@ -1,0 +1,8 @@
+apiVersion: v2
+name: paperless-ngx
+description: A Helm chart for paperless-ngx
+source:
+  - https://github.com/paperless-ngx/paperless-ngx
+type: application
+version: v0.1.0
+appVersion: 2.14.7

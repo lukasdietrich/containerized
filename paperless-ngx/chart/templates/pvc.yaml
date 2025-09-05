@@ -1,0 +1,38 @@
+{{- with .Values.persistence }}
+{{- with .data }}
+{{- if and .enabled (empty .existingClaimName) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "paperless-ngx.fullname" $ }}-data
+  labels:
+    {{- include "paperless-ngx.labels" $ | nindent 4 }}
+spec: {{ .claim | toYaml | nindent 2 }}
+{{- end }}
+{{- end }}
+{{- with .media }}
+{{- if and .enabled (empty .existingClaimName) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "paperless-ngx.fullname" $ }}-media
+  labels:
+    {{- include "paperless-ngx.labels" $ | nindent 4 }}
+spec: {{ .claim | toYaml | nindent 2 }}
+{{- end }}
+{{- end }}
+{{- with .consume }}
+{{- if and .enabled (empty .existingClaimName) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "paperless-ngx.fullname" $ }}-consume
+  labels:
+    {{- include "paperless-ngx.labels" $ | nindent 4 }}
+spec: {{ .claim | toYaml | nindent 2 }}
+{{- end }}
+{{- end }}
+{{- end }}
