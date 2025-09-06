@@ -38,16 +38,18 @@ podAnnotations: {}
 # For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
 podLabels: {}
 
-podSecurityContext:
-  fsGroup: 1000
+podSecurityContext: {}
+  # fsGroup: 1000
 
-securityContext:
-  capabilities:
-    drop:
-    - ALL
-  readOnlyRootFilesystem: false
-  runAsNonRoot: true
-  runAsUser: 1000
+# Rootless does not work after 2.15.3.
+# See https://github.com/paperless-ngx/paperless-ngx/issues/9907
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
 
 # This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
 service:
