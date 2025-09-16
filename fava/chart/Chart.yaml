@@ -4,5 +4,5 @@ description: A Helm chart for fava
 source:
   - https://github.com/beancount/fava
 type: application
-version: v1.31.2
-appVersion: v1.30.5
+version: v1.31.3
+appVersion: v1.30.6
