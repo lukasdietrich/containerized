@@ -1,5 +1,5 @@
 {
 	"name": "ghcr.io/dani-garcia/vaultwarden",
 	"datasource": "docker",
-	"version": "1.35.2-alpine"
+	"version": "1.35.3-alpine"
 }
