@@ -4,5 +4,5 @@ description: A Helm chart for paperless-ngx
 source:
   - https://github.com/paperless-ngx/paperless-ngx
 type: application
-version: v0.2.19
-appVersion: 2.20.14
+version: v0.2.20
+appVersion: 2.20.15
