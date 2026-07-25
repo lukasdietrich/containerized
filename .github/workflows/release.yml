@@ -93,7 +93,7 @@ jobs:
       - if: ${{ steps.check-container.outputs.local == '0' && steps.check-container.outputs.registry != '0' }}
         name: Build container image
         id: build-container
-        uses: redhat-actions/buildah-build@v2
+        uses: redhat-actions/buildah-build@v3
         with:
           oci: true
           context: ./${{ matrix.application }}
